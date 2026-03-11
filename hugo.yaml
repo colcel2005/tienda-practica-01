@@ -1,0 +1,4 @@
+baseURL: "https://ejemplo.com"
+languageCode: "es-es"
+title: "Mi Tienda con PaperMod"
+theme: "PaperMod"
