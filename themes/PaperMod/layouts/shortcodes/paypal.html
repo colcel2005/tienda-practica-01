@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago PayPal - Tienda Online</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .product-container { border: 1px solid #ddd; border-radius: 10px; padding: 30px; text-align: center; }
+        .product-price { font-size: 2em; color: #d4a017; font-weight: bold; margin: 20px 0; }
+        #paypal-button-container { margin: 30px 0; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="product-container">
+        <h1>🛒 Producto Premium</h1>
+        <img src="https://via.placeholder.com/400x300/d4a017/ffffff?text=Tu+Producto" alt="Producto" style="max-width: 100%; border-radius: 10px;">
+        <div class="product-price">$29.99 USD</div>
+        <p>Envío internacional disponible • Pago 100% seguro</p>
+        
+        <div id="paypal-button-container">
+            <div class="loading">🔄 Cargando PayPal seguro...</div>
+        </div>
+        
+        <div style="font-size: 12px; color: #666; margin-top: 20px;">
+            💳 Aceptamos PayPal, tarjetas Visa/Mastercard/Amex
+        </div>
+    </div>
+
+    <!-- PAYPAL SDK CON TU CLIENT ID -->
+    <script data-cfasync="false" src="https://www.paypal.com/sdk/js?client-id=ARCBdueLtkjJ1Bxi7kGwlJ0PGBKx1FpWm-MjgMgNb9H5t8P0BgYBYVl6VAGgjfCsYdWsB5TClZ0LvQTy&currency=USD&components=buttons&intent=capture&disable-funding=card"></script>
+    
+    <script data-cfasync="false">
+        function initPayPal() {
+            paypal.Buttons({
+                // ESTILO DEL BOTÓN
+                style: {
+                    shape: 'rect',
+                    color: 'gold',
+                    layout: 'vertical',
+                    label: 'paypal',
+                    height: 50,
+                    tagline: false
+                },
+                
+                // CREAR ORDEN
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: '29.99',
+                                currency_code: 'USD'
+                            },
+                            description: 'Producto Premium - Tienda Online',
+                            custom_id: 'producto_001'
+                        }]
+                    });
+                },
+                
+                // APROBAR PAGO
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // MOSTRAR ÉXITO
+                        document.getElementById('paypal-button-container').innerHTML = `
+                            <div style="background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 2px solid #c3e6cb;">
+                                <h3>✅ ¡PAGO COMPLETADO!</h3>
+                                <p>Gracias <strong>${details.payer.name.given_name}</strong></p>
+                                <p>Monto: <strong>$${details.purchase_units[0].amount.value}</strong></p>
+                                <p>ID de transacción: <strong>${details.id}</strong></p>
+                                <p>Tu producto será enviado en 24-48hrs</p>
+                            </div>
+                        `;
+                        
+                        // ENVIAR A TU SERVIDOR (OPCIONAL)
+                        console.log('PAGO EXITOSO:', details);
+                        
+                        // GUARDAR EN LOCALSTORAGE
+                        localStorage.setItem('ultimo_pago', JSON.stringify(details));
+                    });
+                },
+                
+                // CANCELAR
+                onCancel: function(data) {
+                    document.getElementById('paypal-button-container').innerHTML = 
+                        '<p style="color: #666;">💳 Pago cancelado. <a href="#" onclick="initPayPal()">Intentar nuevamente</a></p>';
+                },
+                
+                // ERROR
+                onError: function(err) {
+                    console.error('PayPal Error:', err);
+                    document.getElementById('paypal-button-container').innerHTML = `
+                        <div class="error">
+                            ❌ Error conectando con PayPal
+                            <br><small>1. Verifica tu conexión<br>2. Desactiva adblocker<br>3. <a href="#" onclick="location.reload()">Recarga página</a></small>
+                        </div>
+                    `;
+                }
+            }).render('#paypal-button-container');
+        }
+        
+        // INICIAR CUANDO CARGA
+        if (typeof paypal !== 'undefined') {
+            initPayPal();
+        } else {
+            document.getElementById('paypal-button-container').innerHTML = 
+                '<div class="error">❌ No se pudo cargar PayPal. Revisa tu conexión.</div>';
+        }
+    </script>
+</body>
+</html>
